@@ -117,7 +117,8 @@ git push origin 分支名
 18、切换到主分支
     git checkout master
 19、合并dev分支到master(可能会有冲突)
-    git merge dev
+    git merge dev 或
+	git merge dev --allow-unrelated-histories
 20、把刚才新建的分支删除
     git branch -d dev
 21、将分支推送到远端仓库（推送成功后其他人可见）
