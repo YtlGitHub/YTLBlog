@@ -134,7 +134,7 @@ create table 成绩信息表(
 ID int identity(1,1),
 学号 char(6) references 学生信息表(学号),
 课号 char(6) references 课程信息表(课号),
-分数 intger check(分数 between 0 and 100)
+分数 int check(分数 between 0 and 100)
 );
 ```
 说明：
