@@ -58,10 +58,10 @@ class MyTest(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         """整个测试用例的前置条件"""
-        global PACKAGE_NAME
+        # global PACKAGE_NAME
         config_path = os.path.abspath(os.path.join(os.getcwd(), '../..', 'config/config_file'))  # 配置文件路径
         print(config_path, '配置文件路径')
-        PACKAGE_NAME = ReadYaml(config_path, 'PACKAGE_NAME').get_data()  # 包名
+        self.PACKAGE_NAME = ReadYaml(config_path, 'PACKAGE_NAME').get_data()  # 包名
         MOBILE_IP = ReadYaml(config_path, 'MOBILE_IP').get_data()  # 手机ip
         a = ReadYaml(config_path, "CONNECT").get_data()  # 获取配置文件连接方式
         if a == "USB" or a == "usb":
@@ -118,11 +118,11 @@ class MyTest(unittest.TestCase):
 
     def setUp(self):
         """print("每条用例的前置条件")"""
-        self.d.app_start(PACKAGE_NAME)
+        self.d.app_start(self.PACKAGE_NAME)
 
     def tearDown(self):
         """print("每条用例的后置条件")"""
-        self.d.app_stop(PACKAGE_NAME)
+        self.d.app_stop(self.PACKAGE_NAME)
 
     def errorSaveScreenAsPhoto(self, error_module_name):
         now = time.time()  # 现在的时间
@@ -261,8 +261,8 @@ class FirstOpenApp(MyTest):
     def test_01(self, error_module_name="首次打开放弃使用"):
         """首次打开放弃使用"""
         try:
-            self.d.app_clear("com.xingin.xhs")  # 清理数据
-            self.d.app_start("com.xingin.xhs")  # 启动app
+            self.d.app_clear(self.PACKAGE_NAME)  # 清理数据
+            self.d.app_start(self.PACKAGE_NAME)  # 启动app
             time.sleep(1)
             self.d(text="不同意").click(timeout=3)  # 点击不同意
             self.d(text="放弃使用").click(timeout=3)  # 点击放弃使用
