@@ -81,10 +81,10 @@ class MyTest(unittest.TestCase):
                 print("无线连接")
                 self.d = u2.connect(f"{MOBILE_IP}:5555")  # 用手机IP地址无线连接手机
                 print("无线连接成功")
-        self.d.implicitly_wait(10)
         self.d.click_post_delay = 1.5  # 定义全局等待时间为1.5s
+        self.d.implicitly_wait(10)
         # print(self.d.device_info)
-        # 录屏路径
+        # 录屏操作
         screen_record_path = os.path.abspath(os.path.join(os.getcwd(), '../..', 'report/screen_record'))
         if not os.path.exists(screen_record_path):
             os.mkdir(screen_record_path)
@@ -92,17 +92,8 @@ class MyTest(unittest.TestCase):
         now_time = time.strftime("%Y%m%d_%H%M%S", time.localtime(now))  # 当前时间
         self.d.screenrecord(screen_record_path+f"/视频录制{now_time}.mp4")
         print(screen_record_path, '录屏保存目录')
-        print(self.d.current_app(), "当前运行的应用")
-        self.d.app_stop(PACKAGE_NAME)
-
-    @classmethod
-    def tearDownClass(self):
-        """print("所有用例的后置条件")"""
-        # self.d.screenrecord.stop()
-
         # 抓取手机日志并上传到电脑log目录
-        now = time.time()  # 现在的时间
-        now_time = time.strftime("%Y%m%d_%H%M%S", time.localtime(now))  # 当前时间
+        os.system("adb logcat -c")  # 抓取日志前，清除旧的日志信息
         logcat_name = f'/logcat{now_time}.txt'
         logcat_path = os.path.abspath(os.path.join(os.getcwd(), '../..', 'log'))
         if not os.path.exists(logcat_path):
@@ -110,8 +101,20 @@ class MyTest(unittest.TestCase):
             print("生成log目录成功：", logcat_path)
         logcat = f"adb logcat -v time > {logcat_path}"
         print(logcat, "logcat")
-        os.popen("adb logcat -c")  # 抓取日志前，清除旧的日志信息
-        os.popen(logcat+logcat_name)
+        os.popen(logcat + logcat_name)  # 抓取日志
+
+        print(self.d.current_app(), "当前运行的应用")
+
+    @classmethod
+    def tearDownClass(self):
+        """print("所有用例的后置条件")"""
+        # self.d.screenrecord.stop()  # 停止录屏
+        process = os.popen("adb shell ps -A | findstr logcat")  # 获取logcat进程
+        try:
+            process_id = process.read().split()[1]  # 获取logcat进程号
+            os.popen(f"adb shell kill {process_id}")  # 杀掉logcat进程
+        except Exception as e:
+            print(e)
 
     def setUp(self):
         """print("每条用例的前置条件")"""
@@ -178,12 +181,12 @@ from utils.HTMLTestRunner import HTMLTestRunner
 
 
 class RunAmin():
-    def run_main_unittestreport(self):
+    def run_main_unittestreport(self, pattern="text*.py"):
         # case_path = os.getcwd()  # 获取当前路径
         case_path = f"{os.path.abspath(os.path.join(os.getcwd(), '..'))}/test_case/"  # 获取用例路径
         print(case_path, "用例路径")  # 打印用例路径
         #  加载套件
-        suite = unittest.defaultTestLoader.discover(case_path, pattern="test*.py")
+        suite = unittest.defaultTestLoader.discover(case_path, pattern=pattern)
         print("测试套件总用例数：", suite.countTestCases())
 
         now = time.time()  # 现在的时间
@@ -208,9 +211,9 @@ class RunAmin():
         # 邮件发送测试报告
         # runner.send_email(host="smtp.qq.com",
         #                   port=465,  # 587
-        #                   user="1766842398@qq.com",
+        #                   user="176@qq.com",
         #                   password="xxtdlejeiatfcdhd",
-        #                   to_addrs=["1766842398@qq.com", "1632008076@qq.com"]
+        #                   to_addrs=["176@qq.com", "1632008076@qq.com"]
         #                   )
 
         """
@@ -221,7 +224,7 @@ class RunAmin():
         password：smtp服务授权码
         to_addrs：收件人邮箱地址（一个收件人传字符串，多个收件人传列表）
         """
-    def run_main_htmltestrunner(self):
+    def run_main_htmltestrunner(self, pattern="text*.py"):
         now = time.time()  # 现在的时间
         now_time = time.strftime("%Y%m%d_%H%M%S", time.localtime(now))  # 当前时间
         report_name = f"测试报告{now_time}.html"  # 报告名后面加当前时间
@@ -233,13 +236,13 @@ class RunAmin():
         with open(report_path+report_name, "wb") as fl:
             case_path = f"{os.path.abspath(os.path.join(os.getcwd(), '..'))}/test_case/"  # 获取用例路径
             print(case_path, "用例路径")  # 打印用例路径
-            discover = unittest.defaultTestLoader.discover(start_dir=case_path, pattern="test_00*.py")
+            discover = unittest.defaultTestLoader.discover(start_dir=case_path, pattern=pattern)
             runner = HTMLTestRunner(title='测试标题', description='描述本次测试的大概内容', stream=fl)
             runner.run(discover)
 
 
 if __name__ == '__main__':
-    RunAmin().run_main_unittestreport()
+    RunAmin().run_main_unittestreport("test_*.py")
 ```
 
 ### test_case
@@ -309,6 +312,7 @@ class FirstOpenApp(MyTest):
             if self.d(text="允许").exists:
                 self.d(text="允许").click(timeout=3)  # 点击允许
                 self.d(text="跳过").click(timeout=3)  # 点击跳过
+            self.d.swipe_ext("up")  # 向上滑动
             time.sleep(3)
             actual_result = self.d(text="推荐").get_text(timeout=5)  # 获取实际结果
         except Exception as e:
