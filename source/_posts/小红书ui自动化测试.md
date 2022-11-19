@@ -1348,4 +1348,13 @@ print(d.info)
 
 ## adb命令logcat抓取日志
 [链接地址](https://blog.csdn.net/m0_64776928/article/details/126005119)
+adb shell ps -A | grep logcat  # 查看log进程(在windows下将grep换成findstr)
+adb shell kill 进程号  # 杀死进程
+
+## 二者的区别是：spa
+使用os.popen来获取设备号，使用os.system来启动macaca服务
+（1）os.system(cmd)的返回值只会有0(成功),1,2c
+（2）os.popen(cmd)会把执行的cmd的输出做为值返回。
+popen
+此方法能够使用read、readline、readlines方法进行内容操做。
 ```
