@@ -21,8 +21,39 @@ CONNECT : usb  # 连接方式两种 USB和WiFi连接
 ```
 ## 目录结构内容如下
 ## data
-```data
+### json
+```json
+[
+  {
+    "title": "用例1",
+    "data": "用例参数",
+    "expected": "预期结果"
+  },
+  {
+    "title": "用例2",
+    "data": "用例参数",
+    "expected": "预期结果"
+  },
+  {
+    "title": "用例3",
+    "data": "用例参数",
+    "expected": "预期结果"
+  }
+]
+```
+###yaml
+```yaml
+- title: 用例1
+  data: 用例参数
+  expected: 预期结果
 
+- title: 用例2
+  data: 用例参数
+  expected: 预期结果
+
+- title: 用例4
+  data: 用例参数
+  expected: 预期结果
 ```
 
 ## drivers
@@ -422,6 +453,99 @@ class My(MyTest):
             raise e
         self.assertEqualErrorSaveScreenAsPhoto("关注", actual_result, error_module_name)
 ```
+### test_ddt_cases
+```python
+# -*- ecoding: utf-8 -*-
+# @ModuleName: test_ddt_login
+# @Author: 杨天龙
+# @Time: 2022/11/13 15:07
+import time
+import os
+from script.common.little_red_book import MyTest
+import win32com.client
+from datetime import datetime
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from unittestreport import ddt, list_data, json_data, yaml_data
+
+
+@ddt
+class FirstOpenApp(MyTest):
+    """登录类"""
+    def qtest_01(self, error_module_name="首次打开同意"):
+        """首次打开同意"""
+        try:
+            self.d.app_clear(self.PACKAGE_NAME)  # 清楚数据
+            self.d.app_start(self.PACKAGE_NAME)  # 启动app
+            self.d(text="同意").click()  # 点击同意
+            if self.d(text="其他账号").exists(timeout=3):
+                self.d(text="其他账号").click(timeout=3)
+        except Exception as e:
+            self.errorSaveScreenAsPhoto(error_module_name)
+            raise e
+        actual_result = self.d(text="其他登录方式").get_text()  # 获取预期结果
+        self.assertEqualErrorSaveScreenAsPhoto("其他登录方式", actual_result, error_module_name)
+
+    def qtest_02(self, error_module_name="输入正确账号错误密码"):
+        """输入空的账号空的密码"""
+        try:
+            if self.d(text="其他账号").exists(timeout=3):
+                self.d(text="其他账号").click()
+            self.d(text="其他登录方式").click(timeout=3)  # 点击其他登录方式
+            self.d(resourceId="com.xingin.xhs:id/abr").click()  # 点击手机图标
+            self.d(text="手机密码登录").click()  # 点击手机密码登录
+            self.d(resourceId="com.xingin.xhs:id/dfv").send_keys("17664014895")  # 输入账号
+            self.d(resourceId="com.xingin.xhs:id/dgk").send_keys("123456")  # 输入密码
+            self.d(resourceId="com.xingin.xhs:id/emt").click(timeout=3)  # 点击"我已阅读并同意"前面那个小圆点
+            time.sleep(3)
+            self.d(text="登录").click()  # 点击登录
+        except Exception as e:
+            self.errorSaveScreenAsPhoto(error_module_name)
+            raise e
+        # while True:
+        #     toast = self.d.toast.get_message(wait_timeout=10, cache_timeout=10)
+        #     self.errorSaveScreenAsPhoto(error_module_name)  # 截图保存
+        #     print("toast111111")
+        #     if toast:
+        #         print(toast, "打印toast信息")  # 打印toast信息
+        #         self.errorSaveScreenAsPhoto(error_module_name)  # 错误截图保存
+        #         self.speaker.Speak(toast)
+        #         self.d.toast.reset()  # 在验证成功后及时清除缓存
+        #         break
+        # 用于生成xpath定位 相当于 "//*[@text='没有找到用户名或密码']"
+        toast_message = "没有找到用户名或密码"
+        message = '//*[@text=\'{}\']'.format(toast_message)
+
+        # 获取toast提示框内容
+        toast_element = WebDriverWait(self.d, 5).until(lambda x: x.find_element(By.XPATH, message))
+        print(toast_element.text, "toast_element")
+        expected_results = "账号或密码错误"  # 预期结果
+        actual_result = toast_element  # 实际结果
+        self.speaker_assert(expected_results, actual_result)  # 语音播报断言
+        self.assertEqualErrorSaveScreenAsPhoto(expected_results, actual_result, error_module_name)
+
+    cases_list = [{'title': '用例1', 'data': '用例参数', 'expected': '预期结果'},
+             {'title': '用例2', 'data': '用例参数', 'expected': '预期结果'},
+             {'title': '用例3', 'data': '用例参数', 'expected': '预期结果'}]
+
+    json_yaml_path = f'{os.path.abspath(os.path.join(os.getcwd(), "../.."))}/data/'  # 数据路径
+
+    @list_data(cases_list)
+    def test_case_list(self, data):
+        print(data)
+        print(data["data"])
+
+    @json_data(json_yaml_path+"/cases.json")
+    def test_case_json(self, data):
+        print(data)
+        print(data["data"])
+
+    @yaml_data(json_yaml_path+"/cases.yaml")
+    def test_case_yaml(self, data):
+        print(data)
+        print(data["data"])
+```
+
 ## utils
 ### get_device_ip
 ```python
